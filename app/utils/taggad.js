@@ -12,57 +12,38 @@ const store = firebase.storage();
 
 const db = firebase.firestore().doc("timed_events/otillo_app");
 
-export function get_latest(station) {
-	return db.collection("station_"+station).orderBy("time", "desc").limit(1).get().then(res => {
+const latest_listeners = {}
+export function get_latest(station, callback) {
+	if (latest_listeners[station] != null) {
+		console.log("cancelling latest listener")
+		latest_listeners[station]()
+	}
+	latest_listeners[station] = db.collection("station_"+station).orderBy("time", "desc").limit(1).onSnapshot(res => {
 		if(res.docs.length) {
-			console.log("latest got:", res.docs[0].id);
-			return res.docs[0];
+			console.log("latest at ", station, "got:", res.docs[0].id);
+			callback(res.docs[0]);
+			latest_listeners[station]()
 		} else {
 			console.log("latest not found");
 		}
-	}).catch(error => { console.log("found db error: ", error) });
+	}, error => { console.log("found latest error: ", error) });
 }
 
-export function get_matches(runner, stations) {
-
-	return fetch("http://api.eqtiming.com/api/Easy/Result/Contestant/49571?bib="+runner).then(doc => {
+export function get_times(runner) {
+	return fetch("http://api.eqtiming.com/api/Easy/Result/Contestant/49571?bib="+runner, {mode: 'cors'}).then(doc => {
 		console.log(doc); 
 		return doc["DeltakerList"].map(station => Date(station["FinishTime"]))
-	}).then(times => {
-		let matches = [null, null, null];
-		if (times.length) {
-			let after = db.collection("station_start").orderBy("time", "desc").startAt(times[0]).limit(1).get();
-			let before = db.collection("station_start").orderBy("time", "asc").startAt(times[0]).limit(1).get();
+	});
+}
 
-			if (Math.abs(after.data()["time"].toDate() - times[0]) < Math.abs(before.data()["time"].toDate() - times[0])) {
-				matches[0] = after;
-			} else {
-				matches[0] = before;
-			}
-		}
-		if (times.length > 1) {
-			let after = db.collection("station_1").orderBy("time", "desc").startAt(times[1]).limit(1).get();
-			let before = db.collection("station_1").orderBy("time", "asc").startAt(times[1]).limit(1).get();
-
-			if (Math.abs(after.data()["time"].toDate() - times[0]) < Math.abs(before.data()["time"].toDate() - times[0])) {
-				matches[0] = after;
-			} else {
-				matches[0] = before;
-			}
-		}
-		if (times.length > 2) {
-			let after = db.collection("station_goal").orderBy("time", "desc").startAt(times[2]).limit(1).get();
-			let before = db.collection("station_goal").orderBy("time", "asc").startAt(times[2]).limit(1).get();
-
-			if (Math.abs(after.data()["time"].toDate() - times[0]) < Math.abs(before.data()["time"].toDate() - times[0])) {
-				matches[0] = after;
-			} else {
-				matches[0] = before;
-			}
-		}
-		return matches;
-	})
-	
+export function get_match(station, time) {
+	let after = db.collection("station_"+station).orderBy("time", "desc").startAt(time).limit(1).get();
+	let before = db.collection("station_"+station).orderBy("time", "asc").startAt(time).limit(1).get();
+	if (Math.abs(after.data()["time"].toDate() - time) < Math.abs(before.data()["time"].toDate() - time)) {
+		return after;
+	} else {
+		return before;
+	}
 }
 
 // async function get_adjacent(station, curr, n) {
@@ -82,23 +63,27 @@ export function get_matches(runner, stations) {
 // 		});
 // 	});
 // }
-const listeners = {}
-
+const older_listeners = {}
 export function set_older_listener(station, curr, n, callback) {
-	if (listeners["older"+station] != null) {
+	if (older_listeners[station] != null) {
 		console.log("cancelling older listener")
-		listeners["older"+station]()
+		older_listeners[station]()
 	}
-	listeners["older"+station] = db.collection("station_"+station).orderBy("time", "desc").startAfter(curr).limit(n).onSnapshot(callback)
+	older_listeners[station] = db.collection("station_"+station).orderBy("time", "desc").startAfter(curr).limit(n).onSnapshot(callback, 
+		error => { console.log("found older error: ", error) })
 }
+
+const newer_listeners = {}
 export function set_newer_listener(station, curr, n, callback) {
-	if (listeners["newer"+station] != null) {
+	if (newer_listeners[station] != null) {
 		console.log("cancelling newer listener")
-		listeners["newer"+station]()
+		newer_listeners[station]()
 	}
-	listeners["newer"+station] = db.collection("station_"+station).orderBy("time", "asc").startAfter(curr).limit(n).onSnapshot(callback)
+	newer_listeners[station] = db.collection("station_"+station).orderBy("time", "asc").startAfter(curr).limit(n).onSnapshot(callback, 
+		error => { console.log("found newer error: ", error) })
 	
 }
+
 
 
 // async function get_img(doc) {

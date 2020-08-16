@@ -11,7 +11,7 @@
  * Plugin Name:       Taggad-Gallery
  * Plugin URI:        https://www.taggad.se
  * Description:       Image Gallery hosted by Taggad AB
- * Version:           1.0.1
+ * Version:           1.0.2
  * Author:            oskarlarsson
  * Author URI:        https://www.taggad.se
  * Text Domain:       taggad-gallery
@@ -25,7 +25,7 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-define( 'TAGGAD_PLUGIN_VERSION', '1.0.1' );
+define( 'TAGGAD_PLUGIN_VERSION', '1.0.2' );
 
 
 /**

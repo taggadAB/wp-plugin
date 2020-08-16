@@ -55,7 +55,7 @@ class Shortcode {
 		$this->plugin_slug = $plugin->get_plugin_slug();
 		$this->version = $plugin->get_plugin_version();
 
-		add_shortcode( 'wp-reactivate', array( $this, 'shortcode' ) );
+		add_shortcode( 'wp-taggad', array( $this, 'shortcode' ) );
 	}
 
 
@@ -88,11 +88,11 @@ class Shortcode {
 			'title'       => 'Hello world',
 			'api_nonce'   => wp_create_nonce( 'wp_rest' ),
 			'api_url'	  => rest_url( $this->plugin_slug . '/v1/' ),
-		), $atts, 'wp-reactivate' );
+		), $atts, 'wp-taggad' );
 
 		wp_localize_script( $this->plugin_slug . '-shortcode-script', $object_name, $object );
 
-		$shortcode = '<div class="wp-reactivate-shortcode" data-object-id="' . $object_name . '"></div>';
+		$shortcode = '<div class="wp-taggad-shortcode" data-object-id="' . $object_name . '"></div>';
 		return $shortcode;
 	}
 }

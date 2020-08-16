@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import Carousels from '../components/Carousel';
+import TaggadGallery from '../components/TaggadGallery'
 
 export default class Shortcode extends Component {
   render() {
     return (
-      <div>
-  		<Carousels n={2}/>
+      <div className="taggad-shortcode-wrapper">
+      	<TaggadGallery n={4}/>
       </div>
     );
   }
